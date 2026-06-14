@@ -30,30 +30,17 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Initialize Bubblewrap project (non-interactive)
+      - name: Initialize Bubblewrap project (auto-confirm)
         run: |
-          bubblewrap init \
+          echo "" | bubblewrap init \
             --manifest https://yghari.github.io/rewire-app/manifest.json \
-            --directory twa-project \
-            --yes
-        env:
-          BUBBLEWRAP_SKIP_UPDATE_CHECK: true
+            --directory twa-project 2>&1 || true
 
       - name: Accept SDK licenses
         run: |
-          cd twa-project
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Build APK
+      - name: Build APK (auto-confirm)
         run: |
           cd twa-project
-          bubblewrap build --skip-confirmation
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: rewire-app-apk
-          path: |
-            twa-project/app-release-unsigned.apk
-            twa-project/app/build/outputs/apk/**/*.apk
-          if-no-files-found: warn
+          printf "\n" | bubblewrap build 2>&1
