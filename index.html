@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rewire — Daily Mind Reset</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0b1120;
+  --surface:  #111827;
+  --card:     #162033;
+  --border:   #1e2d45;
+  --gold:     #c9a84c;
+  --gold-lt:  #e8c97a;
+  --teal:     #2dd4bf;
+  --text:     #e8e4da;
+  --muted:    #64748b;
+  --green:    #34d399;
+  --sans:     'Plus Jakarta Sans', sans-serif;
+  --arabic:   'Amiri', serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+/* STARFIELD */
+.starfield {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(1px 1px at 20% 15%, rgba(201,168,76,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 25%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 60%, rgba(201,168,76,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(2px 2px at 40% 40%, rgba(201,168,76,0.2) 0%, transparent 100%);
+}
+
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* HEADER */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.bismillah {
+  font-family: var(--arabic);
+  font-size: 1.6rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+  direction: rtl;
+  text-shadow: 0 0 24px rgba(201,168,76,0.35);
+}
+.header h1 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.date-line {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
+  letter-spacing: 0.08em;
+}
+
+/* CRESCENT PROGRESS RING */
+.progress-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1.5rem 0 2rem;
+}
+.ring-container { position: relative; width: 100px; height: 100px; }
+.ring-container svg { transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+.ring-fill {
+  fill: none; stroke: url(#goldGrad); stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  transition: stroke-dashoffset 0.6s cubic-bezier(.4,0,.2,1);
+}
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.ring-pct { font-size: 1.3rem; font-weight: 800; color: var(--gold-lt); }
+.ring-label { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+.ring-caption { margin-top: 0.6rem; font-size: 0.8rem; color: var(--muted); }
+
+/* SECTION */
+.section {
+  margin-bottom: 1.2rem;
+}
+.section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* PRAYER GRID */
+.prayer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+.prayer-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.7rem 0.3rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.prayer-btn:hover { border-color: var(--gold); }
+.prayer-btn.done {
+  background: rgba(201,168,76,0.12);
+  border-color: var(--gold);
+}
+.prayer-btn.done .prayer-check { color: var(--gold); }
+.prayer-name { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
+.prayer-arabic { font-family: var(--arabic); font-size: 0.9rem; color: var(--text); }
+.prayer-check { font-size: 1rem; color: var(--border); transition: color 0.2s; }
+
+/* CHECKLIST */
+.checklist { display: flex; flex-direction: column; gap: 0.5rem; }
+.check-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.check-item:hover { border-color: var(--gold); }
+.check-item.done { background: rgba(201,168,76,0.07); border-color: rgba(201,168,76,0.4); }
+.check-box {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.check-item.done .check-box {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #000;
+}
+.check-text { font-size: 0.88rem; font-weight: 500; }
+.check-item.done .check-text { color: var(--muted); text-decoration: line-through; }
+
+/* AFFIRMATION CARD */
+.affirmation-card {
+  background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(45,212,191,0.05));
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 14px;
+  padding: 1.2rem 1.2rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+.affirmation-card::before {
+  content: '"';
+  position: absolute;
+  top: -0.5rem; left: 0.8rem;
+  font-size: 5rem;
+  color: rgba(201,168,76,0.08);
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+.affirmation-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text);
+  position: relative;
+  min-height: 2.5rem;
+}
+.affirmation-text.loading { color: var(--muted); font-weight: 400; font-size: 0.82rem; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+.affirmation-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.9rem;
+}
+.affirmation-tap { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.06em; }
+.refresh-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); border-radius: 6px;
+  padding: 0.3rem 0.7rem; font-size: 0.72rem;
+  cursor: pointer; font-family: var(--sans);
+  transition: all 0.18s;
+}
+.refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* JOURNAL */
+.journal-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  padding: 0.9rem 1rem;
+  resize: none;
+  outline: none;
+  min-height: 90px;
+  line-height: 1.6;
+  transition: border-color 0.2s;
+}
+.journal-input:focus { border-color: var(--gold); }
+.journal-input::placeholder { color: var(--muted); }
+.save-btn {
+  margin-top: 0.6rem;
+  background: linear-gradient(90deg, var(--gold), var(--gold-lt));
+  color: #0b1120;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.4rem;
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: filter 0.2s;
+  letter-spacing: 0.04em;
+}
+.save-btn:hover { filter: brightness(1.1); }
+
+/* STREAK */
+.streak-row {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.streak-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; color: var(--muted);
+  font-weight: 600;
+}
+.streak-dot.lit {
+  background: rgba(201,168,76,0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--gold);
+  color: #000;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.6rem 1.4rem;
+  border-radius: 999px;
+  transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+  z-index: 100;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>Daily Rewire</h1>
+    <div class="date-line" id="dateLine"></div>
+  </div>
+
+  <!-- PROGRESS RING -->
+  <div class="progress-ring-wrap">
+    <div class="ring-container">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#c9a84c"/>
+            <stop offset="100%" style="stop-color:#e8c97a"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="50" cy="50" r="45"/>
+        <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="45"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-pct" id="ringPct">0%</div>
+        <div class="ring-label">Today</div>
+      </div>
+    </div>
+    <div class="ring-caption" id="ringCaption">Start your day with intention ✦</div>
+  </div>
+
+  <!-- PRAYERS -->
+  <div class="section">
+    <div class="section-title">☽ Prayers</div>
+    <div class="prayer-grid" id="prayerGrid"></div>
+  </div>
+
+  <!-- MORNING HABITS -->
+  <div class="section">
+    <div class="section-title">✦ Morning Rewire</div>
+    <div class="checklist" id="habitList"></div>
+  </div>
+
+  <!-- AFFIRMATION -->
+  <div class="section">
+    <div class="section-title">◈ Affirmation of the Day</div>
+    <div class="affirmation-card">
+      <div class="affirmation-text loading" id="affirmText">Calling on your light…</div>
+      <div class="affirmation-footer">
+        <span class="affirmation-tap">Reflect on this. Breathe it in.</span>
+        <button class="refresh-btn" id="refreshAffirm">New ↺</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRATITUDE JOURNAL -->
+  <div class="section">
+    <div class="section-title">♡ Gratitude</div>
+    <textarea class="journal-input" id="gratInput" placeholder="What are 3 things you're grateful for today?"></textarea>
+    <button class="save-btn" id="saveGrat">Save ✓</button>
+  </div>
+
+  <!-- 7-DAY STREAK -->
+  <div class="section">
+    <div class="section-title">⟡ Streak</div>
+    <div class="streak-row" id="streakRow"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────
+const TODAY = new Date().toISOString().slice(0,10);
+const STORE_KEY = 'rewire_' + TODAY;
+const STREAK_KEY = 'rewire_streak';
+
+let state = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+state.prayers = state.prayers || {};
+state.habits  = state.habits  || {};
+state.grat    = state.grat    || '';
+
+function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+// ── DATE ───────────────────────────────────────────────────────────────
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// ── PRAYERS ───────────────────────────────────────────────────────────
+const PRAYERS = [
+  { id:'fajr',    name:'Fajr',    ar:'الفجر'   },
+  { id:'dhuhr',   name:'Dhuhr',   ar:'الظهر'   },
+  { id:'asr',     name:'Asr',     ar:'العصر'   },
+  { id:'maghrib', name:'Maghrib', ar:'المغرب'  },
+  { id:'isha',    name:'Isha',    ar:'العشاء'  },
+];
+
+const prayerGrid = document.getElementById('prayerGrid');
+PRAYERS.forEach(p => {
+  const btn = document.createElement('button');
+  btn.className = 'prayer-btn' + (state.prayers[p.id] ? ' done' : '');
+  btn.innerHTML = `<div class="prayer-arabic">${p.ar}</div><div class="prayer-name">${p.name}</div><div class="prayer-check">${state.prayers[p.id] ? '✦' : '○'}</div>`;
+  btn.onclick = () => {
+    state.prayers[p.id] = !state.prayers[p.id];
+    btn.className = 'prayer-btn' + (state.prayers[p.id] ? ' done' : '');
+    btn.querySelector('.prayer-check').textContent = state.prayers[p.id] ? '✦' : '○';
+    save(); updateRing();
+    if (state.prayers[p.id]) showToast('الله أكبر — prayer logged 🌙');
+  };
+  prayerGrid.appendChild(btn);
+});
+
+// ── HABITS ────────────────────────────────────────────────────────────
+const HABITS = [
+  { id:'dhikr',    text: 'Morning dhikr — SubhanAllah 33×, Alhamdulillah 33×, Allahu Akbar 33×' },
+  { id:'quran',    text: 'Read Quran — even one ayah with reflection' },
+  { id:'affirm',   text: 'Read today\'s affirmation aloud 3 times' },
+  { id:'gratitude',text: 'Write 3 things you\'re grateful for' },
+  { id:'move',     text: 'Move your body — walk, stretch, or pray Fajr on time' },
+  { id:'nolimit',  text: 'Catch one "I can\'t" thought and replace it with "بإذن الله"' },
+];
+
+const habitList = document.getElementById('habitList');
+HABITS.forEach(h => {
+  const el = document.createElement('div');
+  el.className = 'check-item' + (state.habits[h.id] ? ' done' : '');
+  el.innerHTML = `<div class="check-box">${state.habits[h.id] ? '✓' : ''}</div><div class="check-text">${h.text}</div>`;
+  el.onclick = () => {
+    state.habits[h.id] = !state.habits[h.id];
+    el.className = 'check-item' + (state.habits[h.id] ? ' done' : '');
+    el.querySelector('.check-box').textContent = state.habits[h.id] ? '✓' : '';
+    save(); updateRing();
+  };
+  habitList.appendChild(el);
+});
+
+// ── PROGRESS RING ─────────────────────────────────────────────────────
+function updateRing() {
+  const prayerCount = Object.values(state.prayers).filter(Boolean).length;
+  const habitCount  = Object.values(state.habits).filter(Boolean).length;
+  const total = PRAYERS.length + HABITS.length;
+  const done  = prayerCount + habitCount;
+  const pct   = Math.round((done / total) * 100);
+  const circ  = 283;
+  document.getElementById('ringFill').style.strokeDashoffset = circ - (circ * pct / 100);
+  document.getElementById('ringPct').textContent = pct + '%';
+  const captions = [
+    'Start your day with intention ✦',
+    'You\'ve begun — keep going 🌙',
+    'Growing stronger in faith 🌿',
+    'More than halfway — مَا شَاءَ ٱللَّٰهُ',
+    'Almost complete — stay the course ✦',
+    'Full day. Allah sees your effort 🤲'
+  ];
+  const idx = Math.floor(pct / 20);
+  document.getElementById('ringCaption').textContent = captions[Math.min(idx, captions.length-1)];
+  updateStreak(pct >= 60);
+}
+
+// ── STREAK ────────────────────────────────────────────────────────────
+function updateStreak(todayDone) {
+  let streak = JSON.parse(localStorage.getItem(STREAK_KEY) || '[]');
+  if (!streak.includes(TODAY) && todayDone) {
+    streak.push(TODAY);
+    if (streak.length > 30) streak = streak.slice(-30);
+    localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+  }
+  renderStreak(streak);
+}
+function renderStreak(streak) {
+  const row = document.getElementById('streakRow');
+  row.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    const dot = document.createElement('div');
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' }).slice(0,1);
+    dot.className = 'streak-dot' + (streak.includes(key) ? ' lit' : '');
+    dot.textContent = dayName;
+    dot.title = key;
+    row.appendChild(dot);
+  }
+}
+updateRing();
+
+// ── AFFIRMATION (AI) ──────────────────────────────────────────────────
+async function fetchAffirmation() {
+  const el = document.getElementById('affirmText');
+  el.textContent = 'Calling on your light…';
+  el.className = 'affirmation-text loading';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Generate one powerful, deeply personal daily affirmation for a Muslim who wants to rewire their mind for success, faith in Allah, loving life, and positivity.
+
+Rules:
+- 1–3 sentences max
+- Rooted in Islamic values and tawakkul (reliance on Allah)
+- Positive, present-tense, first-person ("I am...", "I trust...", "Allah has...")
+- Feel alive, not generic
+- May include one short Arabic phrase naturally woven in
+- Output ONLY the affirmation, no explanation, no quotes, no label`
+        }]
+      })
+    });
+    const data = await res.json();
+    el.textContent = data.content?.[0]?.text?.trim() || 'Allah is with me in every step I take.';
+    el.className = 'affirmation-text';
+  } catch {
+    el.textContent = 'I am growing, healing, and becoming — بإذن الله.';
+    el.className = 'affirmation-text';
+  }
+}
+fetchAffirmation();
+document.getElementById('refreshAffirm').onclick = fetchAffirmation;
+
+// ── GRATITUDE ─────────────────────────────────────────────────────────
+const gratInput = document.getElementById('gratInput');
+gratInput.value = state.grat;
+document.getElementById('saveGrat').onclick = () => {
+  state.grat = gratInput.value;
+  save();
+  // mark habit done if filled
+  if (gratInput.value.trim().length > 5) {
+    state.habits['gratitude'] = true;
+    const items = document.querySelectorAll('.check-item');
+    items.forEach(item => {
+      if (item.querySelector('.check-text')?.textContent.includes('grateful')) {
+        item.className = 'check-item done';
+        item.querySelector('.check-box').textContent = '✓';
+      }
+    });
+    updateRing();
+  }
+  showToast('Gratitude saved — الحمد لله 🌿');
+};
+
+// ── TOAST ──────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
