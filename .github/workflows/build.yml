@@ -8,6 +8,7 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
 jobs:
   build:
@@ -25,28 +26,43 @@ jobs:
         with:
           node-version: '22'
           
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
-        
+      - name: Install expect and Bubblewrap
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y expect
+          npm install -g @bubblewrap/cli
+          
       - name: Setup Android SDK
         run: |
-          # Add Android SDK tools to PATH
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-          echo "y" | sdkmanager --licenses
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
           
-      - name: Generate TWA Project
+      - name: Generate TWA Project with expect
         run: |
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          echo "y" | bubblewrap init \
-            --manifest https://yghari.github.io/rewire-app/manifest.json \
-            --directory twa-project
-            
-      - name: Build APK
+          expect << 'EOF'
+            set timeout 60
+            spawn bubblewrap init --manifest https://yghari.github.io/rewire-app/manifest.json --directory twa-project
+            expect {
+              "Do you want to continue?" { send "y\r"; exp_continue }
+              "Press any key" { send "\r"; exp_continue }
+              eof
+            }
+          EOF
+          
+      - name: Build APK with expect
         run: |
           cd twa-project
-          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-          echo "y" | bubblewrap build
+          expect << 'EOF'
+            set timeout 300
+            spawn bubblewrap build
+            expect {
+              "Do you want to continue?" { send "y\r"; exp_continue }
+              "Press any key" { send "\r"; exp_continue }
+              "BUILD SUCCESSFUL" { }
+              eof
+            }
+          EOF
           
       - name: Upload APK
         uses: actions/upload-artifact@v4.6.2
