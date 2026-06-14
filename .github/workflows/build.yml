@@ -30,11 +30,12 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
-      - name: Initialize Bubblewrap project
+      - name: Initialize Bubblewrap project (non-interactive)
         run: |
           bubblewrap init \
             --manifest https://yghari.github.io/rewire-app/manifest.json \
-            --directory twa-project
+            --directory twa-project \
+            --yes
         env:
           BUBBLEWRAP_SKIP_UPDATE_CHECK: true
 
@@ -46,7 +47,7 @@ jobs:
       - name: Build APK
         run: |
           cd twa-project
-          bubblewrap build
+          bubblewrap build --skip-confirmation
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4.6.2
