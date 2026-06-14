@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Rewire — Daily Mind Reset</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c9a84c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rewire">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0b1120;--surface:#111827;--card:#162033;--border:#1e2d45;
+  --gold:#c9a84c;--gold-lt:#e8c97a;--text:#e8e4da;--muted:#64748b;
+  --green:#34d399;--red:#ef4444;
+  --sans:'Plus Jakarta Sans',sans-serif;--arabic:'Amiri',serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding-bottom:5rem;}
+.starfield{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(1px 1px at 20% 15%,rgba(201,168,76,.4) 0%,transparent 100%),
+  radial-gradient(1px 1px at 80% 25%,rgba(255,255,255,.3) 0%,transparent 100%),
+  radial-gradient(1px 1px at 55% 60%,rgba(201,168,76,.3) 0%,transparent 100%),
+  radial-gradient(1px 1px at 10% 70%,rgba(255,255,255,.2) 0%,transparent 100%),
+  radial-gradient(1px 1px at 90% 80%,rgba(255,255,255,.2) 0%,transparent 100%),
+  radial-gradient(2px 2px at 40% 40%,rgba(201,168,76,.15) 0%,transparent 100%);}
+
+/* NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:rgba(11,17,32,.95);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  display:flex;justify-content:space-around;padding:0.5rem 0 0.8rem;}
+.nav-btn{background:none;border:none;color:var(--muted);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:0.2rem;
+  font-family:var(--sans);font-size:0.58rem;letter-spacing:0.06em;text-transform:uppercase;
+  padding:0.3rem 1rem;transition:color 0.2s;}
+.nav-btn .nav-icon{font-size:1.2rem;}
+.nav-btn.active{color:var(--gold);}
+
+/* PAGES */
+.page{display:none;position:relative;z-index:1;max-width:480px;margin:0 auto;padding:1.5rem 1rem 2rem;}
+.page.active{display:block;}
+
+/* HEADER */
+.header{text-align:center;margin-bottom:1.5rem;}
+.bismillah{font-family:var(--arabic);font-size:1.5rem;color:var(--gold);
+  direction:rtl;text-shadow:0 0 24px rgba(201,168,76,.35);margin-bottom:0.4rem;}
+.header h1{font-size:1rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;}
+.date-line{font-size:0.7rem;color:var(--muted);margin-top:0.2rem;letter-spacing:0.06em;}
+
+/* PROGRESS RING */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;margin:1rem 0 1.5rem;}
+.ring-container{position:relative;width:110px;height:110px;}
+.ring-container svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:var(--border);stroke-width:7;}
+.ring-fill{fill:none;stroke:url(#goldGrad);stroke-width:7;stroke-linecap:round;
+  stroke-dasharray:298;stroke-dashoffset:298;transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1);}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-pct{font-size:1.4rem;font-weight:800;color:var(--gold-lt);}
+.ring-sub{font-size:0.58rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;}
+.ring-caption{margin-top:0.5rem;font-size:0.78rem;color:var(--muted);text-align:center;}
+
+/* SECTION */
+.section{margin-bottom:1.2rem;}
+.section-title{font-size:0.66rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:0.65rem;display:flex;align-items:center;gap:0.5rem;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* PRAYER GRID */
+.prayer-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0.45rem;}
+.prayer-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:0.65rem 0.2rem 0.5rem;display:flex;flex-direction:column;align-items:center;
+  gap:0.25rem;cursor:pointer;transition:all 0.2s;}
+.prayer-btn:hover{border-color:var(--gold);}
+.prayer-btn.done{background:rgba(201,168,76,.12);border-color:var(--gold);}
+.prayer-name{font-size:0.58rem;font-weight:600;letter-spacing:0.05em;color:var(--muted);text-transform:uppercase;}
+.prayer-arabic{font-family:var(--arabic);font-size:0.9rem;color:var(--text);}
+.prayer-check{font-size:0.95rem;color:var(--border);transition:color .2s;}
+.prayer-btn.done .prayer-check{color:var(--gold);}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:0.45rem;}
+.check-item{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:0.75rem 1rem;display:flex;align-items:flex-start;gap:0.8rem;
+  cursor:pointer;transition:all 0.2s;user-select:none;}
+.check-item:hover{border-color:var(--gold);}
+.check-item.done{background:rgba(201,168,76,.07);border-color:rgba(201,168,76,.35);}
+.check-box{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:0.65rem;
+  flex-shrink:0;margin-top:1px;transition:all .2s;}
+.check-item.done .check-box{background:var(--gold);border-color:var(--gold);color:#000;}
+.check-text{font-size:0.85rem;font-weight:500;line-height:1.45;}
+.check-item.done .check-text{color:var(--muted);text-decoration:line-through;}
+
+/* PRAYER CHECKIN CARDS */
+.checkin-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  margin-bottom:0.7rem;overflow:hidden;}
+.checkin-header{padding:0.8rem 1rem;display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;transition:background 0.2s;}
+.checkin-header:hover{background:rgba(201,168,76,.05);}
+.checkin-header.done{border-left:3px solid var(--gold);}
+.checkin-left{display:flex;align-items:center;gap:0.7rem;}
+.checkin-arabic{font-family:var(--arabic);font-size:1.1rem;color:var(--gold);}
+.checkin-name{font-weight:700;font-size:0.88rem;}
+.checkin-sub{font-size:0.68rem;color:var(--muted);margin-top:0.1rem;}
+.checkin-badge{font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:999px;
+  background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.3);}
+.checkin-badge.done{background:rgba(52,211,153,.12);color:var(--green);border-color:rgba(52,211,153,.3);}
+.checkin-body{padding:0 1rem 0.9rem;display:none;}
+.checkin-body.open{display:block;}
+.checkin-tasks{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:0.8rem;}
+.ctask{display:flex;align-items:center;gap:0.7rem;cursor:pointer;padding:0.45rem 0;
+  border-bottom:1px solid var(--border);user-select:none;}
+.ctask:last-child{border-bottom:none;}
+.ctask-box{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:0.6rem;flex-shrink:0;transition:all .2s;}
+.ctask.done .ctask-box{background:var(--gold);border-color:var(--gold);color:#000;}
+.ctask-text{font-size:0.82rem;color:var(--text);}
+.ctask.done .ctask-text{color:var(--muted);text-decoration:line-through;}
+.affirmation-mini{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);
+  border-radius:8px;padding:0.7rem 0.8rem;font-size:0.82rem;font-weight:600;
+  line-height:1.55;color:var(--text);min-height:2rem;}
+.affirmation-mini.loading{color:var(--muted);font-weight:400;animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.gen-btn{margin-top:0.5rem;background:none;border:1px solid var(--border);
+  color:var(--muted);border-radius:6px;padding:0.3rem 0.8rem;font-size:0.7rem;
+  cursor:pointer;font-family:var(--sans);transition:all .18s;}
+.gen-btn:hover{border-color:var(--gold);color:var(--gold);}
+.done-all-btn{width:100%;padding:0.6rem;border-radius:8px;border:none;
+  background:linear-gradient(90deg,var(--gold),var(--gold-lt));
+  color:#000;font-weight:700;font-size:0.8rem;cursor:pointer;
+  font-family:var(--sans);letter-spacing:0.04em;transition:filter .2s;}
+.done-all-btn:hover{filter:brightness(1.1);}
+
+/* AFFIRMATION PAGE */
+.affirm-hero{background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(45,212,191,.05));
+  border:1px solid rgba(201,168,76,.25);border-radius:16px;padding:1.5rem 1.3rem 1.2rem;
+  position:relative;overflow:hidden;margin-bottom:1rem;}
+.affirm-hero::before{content:'"';position:absolute;top:-.8rem;left:.8rem;
+  font-size:6rem;color:rgba(201,168,76,.07);font-family:Georgia,serif;line-height:1;}
+.affirm-main{font-size:1.05rem;font-weight:700;line-height:1.65;position:relative;min-height:3rem;}
+.affirm-main.loading{color:var(--muted);font-weight:400;font-size:.85rem;animation:pulse 1.2s ease-in-out infinite;}
+.affirm-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;}
+.affirm-hint{font-size:0.66rem;color:var(--muted);letter-spacing:.06em;}
+.refresh-btn{background:none;border:1px solid var(--border);color:var(--muted);
+  border-radius:6px;padding:.3rem .8rem;font-size:.72rem;cursor:pointer;
+  font-family:var(--sans);transition:all .18s;}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold);}
+.repeat-row{display:flex;gap:.5rem;margin-bottom:1rem;}
+.rep-btn{flex:1;padding:.5rem;border-radius:8px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);font-family:var(--sans);font-size:.72rem;
+  cursor:pointer;transition:all .18s;font-weight:600;}
+.rep-btn:hover{border-color:var(--gold);color:var(--gold);}
+.rep-btn.active{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gold-lt);}
+.rep-count{text-align:center;font-size:2rem;font-weight:800;color:var(--gold-lt);margin:.5rem 0;}
+.rep-label{text-align:center;font-size:.68rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+
+/* JOURNAL */
+.journal-input{width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-family:var(--sans);font-size:.88rem;
+  padding:.9rem 1rem;resize:none;outline:none;min-height:100px;line-height:1.6;
+  transition:border-color .2s;}
+.journal-input:focus{border-color:var(--gold);}
+.journal-input::placeholder{color:var(--muted);}
+.save-btn{margin-top:.6rem;background:linear-gradient(90deg,var(--gold),var(--gold-lt));
+  color:#0b1120;border:none;border-radius:8px;padding:.6rem 1.4rem;
+  font-family:var(--sans);font-weight:700;font-size:.82rem;cursor:pointer;
+  transition:filter .2s;letter-spacing:.04em;}
+.save-btn:hover{filter:brightness(1.1);}
+
+/* STREAK */
+.streak-row{display:flex;gap:.4rem;justify-content:center;flex-wrap:wrap;}
+.streak-dot{width:32px;height:32px;border-radius:50%;background:var(--card);
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:.6rem;color:var(--muted);font-weight:600;}
+.streak-dot.lit{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gold);}
+
+/* SLEEP */
+.sleep-card{background:linear-gradient(135deg,rgba(45,50,80,.6),rgba(11,17,32,.8));
+  border:1px solid rgba(100,116,139,.3);border-radius:14px;padding:1.2rem;margin-bottom:.8rem;}
+.sleep-title{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:#818cf8;margin-bottom:.8rem;}
+.sleep-tasks{display:flex;flex-direction:column;gap:.45rem;}
+
+/* TOAST */
+.toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--gold);color:#000;font-weight:700;font-size:.8rem;
+  padding:.55rem 1.4rem;border-radius:999px;transition:transform .35s cubic-bezier(.4,0,.2,1);
+  z-index:100;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="starfield"></div>
+
+<!-- ════ PAGE: HOME ════ -->
+<div class="page active" id="page-home">
+  <div class="header">
+    <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <h1>Daily Rewire</h1>
+    <div class="date-line" id="dateLine"></div>
+  </div>
+
+  <div class="ring-wrap">
+    <div class="ring-container">
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        <defs>
+          <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#c9a84c"/>
+            <stop offset="100%" style="stop-color:#e8c97a"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="55" cy="55" r="47"/>
+        <circle class="ring-fill" id="ringFill" cx="55" cy="55" r="47"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-pct" id="ringPct">0%</div>
+        <div class="ring-sub">Today</div>
+      </div>
+    </div>
+    <div class="ring-caption" id="ringCaption">Start your day with intention ✦</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">☽ Prayers</div>
+    <div class="prayer-grid" id="prayerGrid"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">✦ Morning Rewire</div>
+    <div class="checklist" id="habitList"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">⟡ 7-Day Streak</div>
+    <div class="streak-row" id="streakRow"></div>
+  </div>
+</div>
+
+<!-- ════ PAGE: CHECK-INS ════ -->
+<div class="page" id="page-checkins">
+  <div class="header">
+    <h1>Prayer Check-ins</h1>
+    <div class="date-line">Affirmation + Dhikr after each prayer — 7× daily rewire</div>
+  </div>
+  <div id="checkinList"></div>
+</div>
+
+<!-- ════ PAGE: AFFIRMATION ════ -->
+<div class="page" id="page-affirm">
+  <div class="header">
+    <h1>Affirmation</h1>
+    <div class="date-line">Say it aloud. Feel it. Own it.</div>
+  </div>
+
+  <div class="affirm-hero">
+    <div class="affirm-main loading" id="affirmMain">Calling on your light…</div>
+    <div class="affirm-footer">
+      <span class="affirm-hint">Breathe in. Say it aloud.</span>
+      <button class="refresh-btn" id="refreshAffirm">New ↺</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">◈ Say it 3× — tap each time</div>
+    <div class="repeat-row">
+      <button class="rep-btn" data-rep="1" id="rep1">1st</button>
+      <button class="rep-btn" data-rep="2" id="rep2">2nd</button>
+      <button class="rep-btn" data-rep="3" id="rep3">3rd ✦</button>
+    </div>
+    <div class="rep-count" id="repCount">0</div>
+    <div class="rep-label">of 3 repetitions today</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">♡ Gratitude</div>
+    <textarea class="journal-input" id="gratInput" placeholder="What are 3 things you're grateful for today?&#10;&#10;1.&#10;2.&#10;3."></textarea>
+    <button class="save-btn" id="saveGrat">Save ✓</button>
+  </div>
+</div>
+
+<!-- ════ PAGE: SLEEP ════ -->
+<div class="page" id="page-sleep">
+  <div class="header">
+    <h1>Sleep Rewire</h1>
+    <div class="date-line">Last 10 minutes before sleep = brain compiler 🌙</div>
+  </div>
+
+  <div class="sleep-card">
+    <div class="sleep-title">🌙 Night Protocol</div>
+    <div class="sleep-tasks checklist" id="sleepList"></div>
+  </div>
+
+  <div class="section" style="margin-top:1rem;">
+    <div class="section-title">✍ Tonight's Reflection</div>
+    <textarea class="journal-input" id="sleepJournal" placeholder="What did Allah bless you with today?&#10;What belief did you catch and replace?&#10;What will tomorrow's version of you do differently?"></textarea>
+    <button class="save-btn" id="saveSleep">Save ✓</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">◈ Bedtime Affirmation</div>
+    <div class="affirm-hero" style="margin-bottom:0">
+      <div class="affirm-main loading" id="sleepAffirm">Loading your night affirmation…</div>
+      <div class="affirm-footer">
+        <span class="affirm-hint">Read this as you close your eyes.</span>
+        <button class="refresh-btn" id="refreshSleep">New ↺</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-page="home"><span class="nav-icon">🏠</span>Home</button>
+  <button class="nav-btn" data-page="checkins"><span class="nav-icon">🤲</span>Check-ins</button>
+  <button class="nav-btn" data-page="affirm"><span class="nav-icon">✦</span>Affirm</button>
+  <button class="nav-btn" data-page="sleep"><span class="nav-icon">🌙</span>Sleep</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────
+const TODAY = new Date().toISOString().slice(0,10);
+const SK = 'rewire_' + TODAY;
+const STREAK_KEY = 'rewire_streak';
+
+let state = JSON.parse(localStorage.getItem(SK) || '{}');
+state.prayers   = state.prayers   || {};
+state.habits    = state.habits    || {};
+state.checkins  = state.checkins  || {};  // {prayerId: {dhikr, affirm, done}}
+state.grat      = state.grat      || '';
+state.sleep     = state.sleep     || {};
+state.sleepNote = state.sleepNote || '';
+state.repCount  = state.repCount  || 0;
+
+function save() { localStorage.setItem(SK, JSON.stringify(state)); }
+
+// ── DATE ─────────────────────────────────────────────────────────────
+document.getElementById('dateLine').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ── NAV ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+  });
+});
+
+// ── PRAYERS ──────────────────────────────────────────────────────────
+const PRAYERS = [
+  {id:'fajr',    name:'Fajr',    ar:'الفجر',  time:'Dawn'},
+  {id:'dhuhr',   name:'Dhuhr',   ar:'الظهر',  time:'Midday'},
+  {id:'asr',     name:'Asr',     ar:'العصر',  time:'Afternoon'},
+  {id:'maghrib', name:'Maghrib', ar:'المغرب', time:'Sunset'},
+  {id:'isha',    name:'Isha',    ar:'العشاء', time:'Night'},
+];
+
+const prayerGrid = document.getElementById('prayerGrid');
+PRAYERS.forEach(p => {
+  const btn = document.createElement('button');
+  btn.className = 'prayer-btn' + (state.prayers[p.id] ? ' done' : '');
+  btn.innerHTML = `<div class="prayer-arabic">${p.ar}</div><div class="prayer-name">${p.name}</div><div class="prayer-check">${state.prayers[p.id]?'✦':'○'}</div>`;
+  btn.onclick = () => {
+    state.prayers[p.id] = !state.prayers[p.id];
+    btn.className = 'prayer-btn' + (state.prayers[p.id] ? ' done' : '');
+    btn.querySelector('.prayer-check').textContent = state.prayers[p.id] ? '✦' : '○';
+    save(); updateRing();
+    if (state.prayers[p.id]) showToast('الله أكبر — ' + p.name + ' logged 🌙');
+  };
+  prayerGrid.appendChild(btn);
+});
+
+// ── MORNING HABITS ────────────────────────────────────────────────────
+const HABITS = [
+  {id:'dhikr',    text:'Morning dhikr — SubhanAllah 33×, Alhamdulillah 33×, Allahu Akbar 33×'},
+  {id:'quran',    text:'Read Quran — even one ayah with reflection'},
+  {id:'affirm',   text:'Say today\'s affirmation aloud 3 times'},
+  {id:'gratitude',text:'Write 3 things you\'re grateful for'},
+  {id:'move',     text:'Move your body — walk, stretch, or pray Fajr on time'},
+  {id:'belief',   text:'Catch one "I can\'t" thought — replace it with بإذن الله'},
+];
+
+const habitList = document.getElementById('habitList');
+HABITS.forEach(h => {
+  const el = document.createElement('div');
+  el.className = 'check-item' + (state.habits[h.id] ? ' done' : '');
+  el.dataset.id = h.id;
+  el.innerHTML = `<div class="check-box">${state.habits[h.id]?'✓':''}</div><div class="check-text">${h.text}</div>`;
+  el.onclick = () => {
+    state.habits[h.id] = !state.habits[h.id];
+    el.className = 'check-item' + (state.habits[h.id] ? ' done' : '');
+    el.querySelector('.check-box').textContent = state.habits[h.id] ? '✓' : '';
+    save(); updateRing();
+  };
+  habitList.appendChild(el);
+});
+
+// ── PRAYER CHECK-INS ──────────────────────────────────────────────────
+const CHECKIN_TASKS = [
+  {id:'sunnah', text:'Pray sunnah (if applicable)'},
+  {id:'dhikr33',text:'SubhanAllah 33 × Alhamdulillah 33 × Allahu Akbar 34'},
+  {id:'dua',    text:'Make personal du\'a — speak to Allah freely'},
+  {id:'affirm', text:'Read affirmation below aloud with full belief'},
+];
+
+const checkinList = document.getElementById('checkinList');
+const openCheckins = {};
+
+PRAYERS.forEach(p => {
+  state.checkins[p.id] = state.checkins[p.id] || {tasks:{}, affirmText:'', done:false};
+  const ci = state.checkins[p.id];
+  const allDone = CHECKIN_TASKS.every(t => ci.tasks[t.id]);
+
+  const card = document.createElement('div');
+  card.className = 'checkin-card';
+  card.innerHTML = `
+    <div class="checkin-header ${allDone?'done':''}">
+      <div class="checkin-left">
+        <div class="checkin-arabic">${p.ar}</div>
+        <div>
+          <div class="checkin-name">${p.name}</div>
+          <div class="checkin-sub">${p.time} check-in</div>
+        </div>
+      </div>
+      <span class="checkin-badge ${allDone?'done':''}">${allDone?'✦ Done':'Tap to open'}</span>
+    </div>
+    <div class="checkin-body" id="cb-${p.id}">
+      <div class="checkin-tasks" id="ct-${p.id}"></div>
+      <div class="affirmation-mini loading" id="ca-${p.id}">${ci.affirmText || 'Loading affirmation…'}</div>
+      <button class="gen-btn" id="cg-${p.id}" style="margin-bottom:.7rem">↺ New affirmation</button>
+      <button class="done-all-btn" id="cdone-${p.id}">✓ Complete ${p.name} check-in</button>
+    </div>`;
+  checkinList.appendChild(card);
+
+  // header toggle
+  card.querySelector('.checkin-header').onclick = () => {
+    const body = document.getElementById('cb-' + p.id);
+    const isOpen = body.classList.contains('open');
+    document.querySelectorAll('.checkin-body').forEach(b => b.classList.remove('open'));
+    if (!isOpen) {
+      body.classList.add('open');
+      if (!ci.affirmText) fetchCheckinAffirm(p.id);
+      else {
+        const el = document.getElementById('ca-' + p.id);
+        el.textContent = ci.affirmText;
+        el.className = 'affirmation-mini';
+      }
+    }
+  };
+
+  // tasks
+  const ctEl = document.getElementById('ct-' + p.id);
+  CHECKIN_TASKS.forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'ctask' + (ci.tasks[t.id] ? ' done' : '');
+    row.innerHTML = `<div class="ctask-box">${ci.tasks[t.id]?'✓':''}</div><div class="ctask-text">${t.text}</div>`;
+    row.onclick = () => {
+      ci.tasks[t.id] = !ci.tasks[t.id];
+      row.className = 'ctask' + (ci.tasks[t.id] ? ' done' : '');
+      row.querySelector('.ctask-box').textContent = ci.tasks[t.id] ? '✓' : '';
+      save();
+    };
+    ctEl.appendChild(row);
+  });
+
+  // gen affirmation
+  document.getElementById('cg-' + p.id).onclick = () => fetchCheckinAffirm(p.id);
+
+  // done
+  document.getElementById('cdone-' + p.id).onclick = () => {
+    ci.done = true;
+    ci.tasks = {};
+    CHECKIN_TASKS.forEach(t => ci.tasks[t.id] = true);
+    ctEl.querySelectorAll('.ctask').forEach(r => {
+      r.className = 'ctask done';
+      r.querySelector('.ctask-box').textContent = '✓';
+    });
+    const header = card.querySelector('.checkin-header');
+    header.classList.add('done');
+    card.querySelector('.checkin-badge').textContent = '✦ Done';
+    card.querySelector('.checkin-badge').classList.add('done');
+    document.getElementById('cb-' + p.id).classList.remove('open');
+    save(); updateRing();
+    showToast(p.name + ' check-in complete 🤲');
+  };
+});
+
+async function fetchCheckinAffirm(prayerId) {
+  const el = document.getElementById('ca-' + prayerId);
+  el.textContent = 'Generating…'; el.className = 'affirmation-mini loading';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:1000,
+        messages:[{role:'user',content:`Generate one short powerful affirmation (1-2 sentences) for a Muslim after completing their ${prayerId} prayer. Rooted in tawakkul, success mindset, loving Allah and life. Present tense, first person. May include one Arabic phrase. Output ONLY the affirmation.`}]
+      })
+    });
+    const d = await r.json();
+    const text = d.content?.[0]?.text?.trim() || 'Allah has blessed this prayer and this moment.';
+    el.textContent = text;
+    el.className = 'affirmation-mini';
+    state.checkins[prayerId].affirmText = text;
+    save();
+  } catch {
+    el.textContent = 'Allah is with me — every prayer brings me closer. الحمد لله';
+    el.className = 'affirmation-mini';
+  }
+}
+
+// ── PROGRESS RING ─────────────────────────────────────────────────────
+function updateRing() {
+  const prayerDone = Object.values(state.prayers).filter(Boolean).length;
+  const habitDone  = Object.values(state.habits).filter(Boolean).length;
+  const checkinDone = PRAYERS.filter(p => state.checkins[p.id]?.done).length;
+  const total = PRAYERS.length + HABITS.length + PRAYERS.length; // prayers + habits + checkins
+  const done  = prayerDone + habitDone + checkinDone;
+  const pct   = Math.round((done / total) * 100);
+  const circ  = 295;
+  document.getElementById('ringFill').style.strokeDashoffset = circ - (circ * pct / 100);
+  document.getElementById('ringPct').textContent = pct + '%';
+  const caps = [
+    'Start your day with intention ✦',
+    'You\'ve begun — بإذن الله 🌙',
+    'Growing stronger in faith 🌿',
+    'More than halfway — مَا شَاءَ ٱللَّٰهُ',
+    'Almost there — stay the course ✦',
+    'Full day. Allah sees your effort 🤲'
+  ];
+  document.getElementById('ringCaption').textContent = caps[Math.min(Math.floor(pct/20), 5)];
+  updateStreak(pct >= 60);
+}
+
+// ── STREAK ────────────────────────────────────────────────────────────
+function updateStreak(todayDone) {
+  let streak = JSON.parse(localStorage.getItem(STREAK_KEY) || '[]');
+  if (!streak.includes(TODAY) && todayDone) {
+    streak.push(TODAY);
+    if (streak.length > 30) streak = streak.slice(-30);
+    localStorage.setItem(STREAK_KEY, JSON.stringify(streak));
+  }
+  const row = document.getElementById('streakRow');
+  row.innerHTML = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    const dot = document.createElement('div');
+    dot.className = 'streak-dot' + (streak.includes(key) ? ' lit' : '');
+    dot.textContent = d.toLocaleDateString('en-US',{weekday:'short'}).slice(0,1);
+    dot.title = key;
+    row.appendChild(dot);
+  }
+}
+updateRing();
+
+// ── AFFIRMATION PAGE ──────────────────────────────────────────────────
+async function fetchMainAffirm() {
+  const el = document.getElementById('affirmMain');
+  el.textContent = 'Calling on your light…'; el.className = 'affirm-main loading';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:1000,
+        messages:[{role:'user',content:`One powerful daily affirmation for a Muslim rewiring for success, faith in Allah, loving life, positivity. 1-3 sentences. Rooted in tawakkul. Present tense, first person. May include one Arabic phrase. ONLY the affirmation.`}]
+      })
+    });
+    const d = await r.json();
+    el.textContent = d.content?.[0]?.text?.trim() || 'Allah has placed greatness in me — I walk toward it today.';
+    el.className = 'affirm-main';
+  } catch {
+    el.textContent = 'I am growing, healing, and becoming — بإذن الله.';
+    el.className = 'affirm-main';
+  }
+}
+fetchMainAffirm();
+document.getElementById('refreshAffirm').onclick = fetchMainAffirm;
+
+// repetition counter
+function renderReps() {
+  const count = state.repCount || 0;
+  document.getElementById('repCount').textContent = count;
+  [1,2,3].forEach(n => {
+    document.getElementById('rep'+n).className = 'rep-btn' + (count >= n ? ' active' : '');
+  });
+  if (count >= 3) {
+    state.habits['affirm'] = true;
+    document.querySelectorAll('.check-item').forEach(el => {
+      if (el.dataset.id === 'affirm') {
+        el.className = 'check-item done';
+        el.querySelector('.check-box').textContent = '✓';
+      }
+    });
+    save(); updateRing();
+  }
+}
+renderReps();
+[1,2,3].forEach(n => {
+  document.getElementById('rep'+n).onclick = () => {
+    if (state.repCount < n) {
+      state.repCount = n;
+      save(); renderReps();
+      if (n === 3) showToast('3× done — الحمد لله, it\'s wiring in! ✦');
+    }
+  };
+});
+
+// gratitude
+const gratInput = document.getElementById('gratInput');
+gratInput.value = state.grat;
+document.getElementById('saveGrat').onclick = () => {
+  state.grat = gratInput.value;
+  if (gratInput.value.trim().length > 5) {
+    state.habits['gratitude'] = true;
+    document.querySelectorAll('.check-item').forEach(el => {
+      if (el.dataset.id === 'gratitude') {
+        el.className = 'check-item done';
+        el.querySelector('.check-box').textContent = '✓';
+      }
+    });
+    updateRing();
+  }
+  save(); showToast('Gratitude saved — الحمد لله 🌿');
+};
+
+// ── SLEEP PAGE ────────────────────────────────────────────────────────
+const SLEEP_TASKS = [
+  {id:'s_phone',  text:'Put phone away — screens off 30 min before sleep'},
+  {id:'s_wudu',   text:'Make wudu (ablution) before lying down'},
+  {id:'s_ayatul', text:'Read Ayatul Kursi — protection for the night'},
+  {id:'s_tasbeeh',text:'SubhanAllah 33 × Alhamdulillah 33 × Allahu Akbar 34'},
+  {id:'s_dua',    text:'Night du\'a — اللَّهُمَّ بِاسْمِكَ أَمُوتُ وَأَحْيَا'},
+  {id:'s_affirm', text:'Read bedtime affirmation below aloud — feel it'},
+  {id:'s_right',  text:'Sleep on your right side, facing Qibla if possible'},
+];
+
+const sleepList = document.getElementById('sleepList');
+SLEEP_TASKS.forEach(t => {
+  state.sleep[t.id] = state.sleep[t.id] || false;
+  const el = document.createElement('div');
+  el.className = 'check-item' + (state.sleep[t.id] ? ' done' : '');
+  el.innerHTML = `<div class="check-box">${state.sleep[t.id]?'✓':''}</div><div class="check-text">${t.text}</div>`;
+  el.onclick = () => {
+    state.sleep[t.id] = !state.sleep[t.id];
+    el.className = 'check-item' + (state.sleep[t.id] ? ' done' : '');
+    el.querySelector('.check-box').textContent = state.sleep[t.id] ? '✓' : '';
+    save();
+  };
+  sleepList.appendChild(el);
+});
+
+const sleepJournal = document.getElementById('sleepJournal');
+sleepJournal.value = state.sleepNote;
+document.getElementById('saveSleep').onclick = () => {
+  state.sleepNote = sleepJournal.value;
+  save(); showToast('Night reflection saved 🌙');
+};
+
+async function fetchSleepAffirm() {
+  const el = document.getElementById('sleepAffirm');
+  el.textContent = 'Loading…'; el.className = 'affirm-main loading';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:1000,
+        messages:[{role:'user',content:`One peaceful, powerful bedtime affirmation for a Muslim. Themes: gratitude to Allah, trust in His plan, growth mindset, restful surrender. 1-2 sentences. May include one Arabic phrase. ONLY the affirmation.`}]
+      })
+    });
+    const d = await r.json();
+    el.textContent = d.content?.[0]?.text?.trim() || 'I rest in the hands of Allah — tomorrow I rise renewed, بإذن الله.';
+    el.className = 'affirm-main';
+  } catch {
+    el.textContent = 'I surrender this day to Allah, grateful for every breath. Tomorrow I rise stronger.';
+    el.className = 'affirm-main';
+  }
+}
+fetchSleepAffirm();
+document.getElementById('refreshSleep').onclick = fetchSleepAffirm;
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>
