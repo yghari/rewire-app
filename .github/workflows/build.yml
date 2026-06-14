@@ -26,49 +26,34 @@ jobs:
         with:
           node-version: '22'
           
-      - name: Install expect and Bubblewrap
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y expect
-          npm install -g @bubblewrap/cli
-          
       - name: Setup Android SDK
         run: |
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
           
-      - name: Generate TWA Project with expect
+      - name: Generate TWA project with non-interactive flag
         run: |
-          expect << 'EOF'
-            set timeout 60
-            spawn bubblewrap init --manifest https://yghari.github.io/rewire-app/manifest.json --directory twa-project
-            expect {
-              "Do you want to continue?" { send "y\r"; exp_continue }
-              "Press any key" { send "\r"; exp_continue }
-              eof
-            }
-          EOF
+          npx --yes @bubblewrap/cli init \
+            --manifest https://yghari.github.io/rewire-app/manifest.json \
+            --directory twa-project \
+            --skip-confirmation 2>&1 || \
+          echo "y" | npx --yes @bubblewrap/cli init \
+            --manifest https://yghari.github.io/rewire-app/manifest.json \
+            --directory twa-project
           
-      - name: Build APK with expect
+      - name: Build with gradle (skip bubblewrap)
         run: |
           cd twa-project
-          expect << 'EOF'
-            set timeout 300
-            spawn bubblewrap build
-            expect {
-              "Do you want to continue?" { send "y\r"; exp_continue }
-              "Press any key" { send "\r"; exp_continue }
-              "BUILD SUCCESSFUL" { }
-              eof
-            }
-          EOF
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon -Pandroid.injected.signing.store.file=/tmp/keystore.jks -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android || \
+          ./gradlew assembleRelease --no-daemon
           
       - name: Upload APK
         uses: actions/upload-artifact@v4.6.2
         with:
           name: rewire-app-apk
           path: |
-            twa-project/app/build/outputs/apk/**/*.apk
-            twa-project/app-release-unsigned.apk
+            twa-project/app/build/outputs/apk/release/*.apk
+            twa-project/app/build/outputs/apk/*/*.apk
           if-no-files-found: error
