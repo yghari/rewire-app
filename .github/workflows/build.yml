@@ -5,24 +5,27 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v4.7.0
         with:
           distribution: temurin
-          java-version: '11'
+          java-version: '17'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.4.0
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
@@ -45,15 +48,11 @@ jobs:
           cd twa-project
           bubblewrap build
 
-      - name: Find APK
-        run: find . -name "*.apk" 2>/dev/null
-
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: rewire-app-apk
           path: |
             twa-project/app-release-unsigned.apk
             twa-project/app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
-
