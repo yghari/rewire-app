@@ -7,6 +7,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ANDROID_HOME: /usr/local/lib/android/sdk
 
 jobs:
   build:
@@ -29,11 +30,14 @@ jobs:
         
       - name: Setup Android SDK
         run: |
-          yes | sdkmanager --licenses
+          # Add Android SDK tools to PATH
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+          echo "y" | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
           
       - name: Generate TWA Project
         run: |
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
           echo "y" | bubblewrap init \
             --manifest https://yghari.github.io/rewire-app/manifest.json \
             --directory twa-project
@@ -41,6 +45,7 @@ jobs:
       - name: Build APK
         run: |
           cd twa-project
+          export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
           echo "y" | bubblewrap build
           
       - name: Upload APK
