@@ -127,7 +127,12 @@ distributionUrl=https\\://services.gradle.org/distributions/gradle-8.4-bin.zip
 zipStoreBase=GRADLE_USER_HOME
 zipStorePath=wrapper/dists
 ''')
-
+# ── gradle.properties ─────────────────────────────────────────────────
+with open('twa/gradle.properties', 'w') as f:
+    f.write('''android.useAndroidX=true
+android.enableJetifier=true
+org.gradle.jvmargs=-Xmx2048m
+''')
 # ── PNG icon generator ────────────────────────────────────────────────
 def mkpng(w, h, bg, fg):
     rows = []
