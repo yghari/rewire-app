@@ -25,155 +25,8 @@ jobs:
       - name: Accept licenses
         run: yes | sdkmanager --licenses || true
 
-      - name: Create TWA project
-        run: |
-          mkdir -p twa/app/src/main/res/values
-          mkdir -p twa/app/src/main/res/drawable
-          mkdir -p twa/app/src/main/res/mipmap-hdpi
-          mkdir -p twa/app/src/main/res/mipmap-mdpi
-          mkdir -p twa/app/src/main/res/mipmap-xhdpi
-          mkdir -p twa/app/src/main/res/mipmap-xxhdpi
-          mkdir -p twa/app/src/main/res/mipmap-xxxhdpi
-          mkdir -p twa/gradle/wrapper
-
-          cat > twa/settings.gradle << 'GRADLE'
-rootProject.name = "Rewire"
-include ':app'
-GRADLE
-
-          cat > twa/build.gradle << 'GRADLE'
-buildscript {
-  repositories { google(); mavenCentral() }
-  dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
-}
-allprojects { repositories { google(); mavenCentral() } }
-GRADLE
-
-          cat > twa/app/build.gradle << 'GRADLE'
-plugins { id 'com.android.application' }
-android {
-  namespace 'com.yghari.rewire'
-  compileSdk 34
-  defaultConfig {
-    applicationId 'com.yghari.rewire'
-    minSdk 21
-    targetSdk 34
-    versionCode 1
-    versionName '1.0'
-  }
-  buildTypes {
-    debug { debuggable true }
-  }
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_17
-    targetCompatibility JavaVersion.VERSION_17
-  }
-}
-dependencies {
-  implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
-}
-GRADLE
-
-          cat > twa/app/src/main/AndroidManifest.xml << 'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-  <uses-permission android:name="android.permission.INTERNET"/>
-  <application
-    android:label="Rewire"
-    android:icon="@mipmap/ic_launcher"
-    android:theme="@style/AppTheme"
-    android:allowBackup="true">
-    <activity
-      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-      android:exported="true">
-      <meta-data
-        android:name="android.support.customtabs.trusted.DEFAULT_URL"
-        android:value="https://yghari.github.io/rewire-app/"/>
-      <meta-data
-        android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
-        android:value="@color/colorPrimary"/>
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.LAUNCHER"/>
-      </intent-filter>
-    </activity>
-    <service
-      android:name="com.google.androidbrowserhelper.trusted.DelegationService"
-      android:exported="true"
-      android:enabled="true">
-      <intent-filter>
-        <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE"/>
-        <category android:name="android.intent.category.DEFAULT"/>
-      </intent-filter>
-    </service>
-  </application>
-</manifest>
-XML
-
-          cat > twa/app/src/main/res/values/colors.xml << 'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <color name="colorPrimary">#0b1120</color>
-</resources>
-XML
-
-          cat > twa/app/src/main/res/values/styles.xml << 'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <style name="AppTheme" parent="android:Theme.NoTitleBar">
-    <item name="android:windowBackground">@color/colorPrimary</item>
-  </style>
-</resources>
-XML
-
-          cat > twa/app/src/main/res/drawable/splash.xml << 'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-  <solid android:color="#0b1120"/>
-</shape>
-XML
-
-          cat > twa/gradle/wrapper/gradle-wrapper.properties << 'PROPS'
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-PROPS
-
-          python3 -c "
-import struct, zlib
-def mkpng(w,h,bg,fg):
-    rows=[]
-    cx,cy=w//2,h//2
-    for y in range(h):
-        row=[0]
-        for x in range(w):
-            dx,dy=x-cx,y-cy
-            if dx*dx+dy*dy<=(min(w,h)//2-4)**2:
-                row+=list(fg)
-            else:
-                row+=list(bg)
-        rows.append(bytes(row))
-    raw=b''.join(rows)
-    def chunk(t,d):
-        c=zlib.crc32(t+d)&0xffffffff
-        return struct.pack('>I',len(d))+t+d+struct.pack('>I',c)
-    return (b'\x89PNG\r\n\x1a\n'
-        +chunk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,2,0,0,0))
-        +chunk(b'IDAT',zlib.compress(raw))
-        +chunk(b'IEND',b''))
-data=mkpng(192,192,(11,17,32),(201,168,76))
-open('/tmp/icon.png','wb').write(data)
-"
-          for d in hdpi mdpi xhdpi xxhdpi xxxhdpi; do
-            cp /tmp/icon.png twa/app/src/main/res/mipmap-$d/ic_launcher.png
-          done
-
-          curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradlew" -o twa/gradlew
-          chmod +x twa/gradlew
-          curl -sL "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
-            -o twa/gradle/wrapper/gradle-wrapper.jar
+      - name: Generate TWA project files
+        run: python3 setup_twa.py
 
       - name: Show project structure
         run: find twa -type f | sort
@@ -181,19 +34,13 @@ open('/tmp/icon.png','wb').write(data)
       - name: Build APK
         run: |
           cd twa
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Find all APKs
+      - name: Find APK
         if: always()
-        run: find twa -name "*.apk" 2>/dev/null || echo "NO APK FOUND"
-
-      - name: Show build outputs
-        if: always()
-        run: |
-          find twa/app/build -type f 2>/dev/null | sort || echo "No build folder"
+        run: find . -name "*.apk" || echo "NO APK FOUND"
 
       - name: Upload APK
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: rewire-app-apk
